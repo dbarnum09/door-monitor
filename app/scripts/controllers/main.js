@@ -8,15 +8,19 @@
  * Controller of the doorMonitorApp
  */
 angular.module('doorMonitorApp')
-  .controller('MainCtrl', function ($scope,$http,$log,$interval) {
-
+  .controller('MainCtrl', function ($scope, $http, $log, $interval) {
+    var LOCKED = 0;
+    var UNLOCKED =1;
     $scope.chartConfig = {
       options: {
+        exporting: {
+          enabled: false
+        },
         chart: {
           type: 'gauge',
           plotBorderWidth: 1,
           plotBackgroundColor: {
-            linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+            linearGradient: {x1: 0, y1: 0, x2: 0, y2: 1},
             stops: [
               [0, '#FFF4C6'],
               [0.3, '#FFFFFF'],
@@ -30,15 +34,11 @@ angular.module('doorMonitorApp')
           startAngle: -45,
           endAngle: 45,
           background: null,
-          center: ['25%', '145%'],
+          center: ['50%', '145%'],
           size: 300
-        }, {
-          startAngle: -45,
-          endAngle: 45,
-          background: null,
-          center: ['75%', '145%'],
-          size: 300
-        }],
+        },
+
+        ],
         plotOptions: {
           gauge: {
             dataLabels: {
@@ -51,88 +51,100 @@ angular.module('doorMonitorApp')
         }
       },
       series: [{
-        data: [-20],
+        data: [0],
         yAxis: 0
       },
-        {
-        data: [-20],
-        yAxis: 1
-      }
+
       ],
       title: {
-        text: 'VU meter'
+        text: 'Yeah I am a Freak'
       },
-
+      xAxis: [{
+        labels: {
+          enabled: false
+        }
+      }
+      ],
       yAxis: [{
-        min: -20,
-        max: 6,
+        min: -1,
+        max: 1,
         minorTickPosition: 'outside',
-        tickPosition: 'outside',
         labels: {
           rotation: 'auto',
           distance: 20
         },
         plotBands: [{
           from: 0,
-          to: 6,
+          to: 1,
           color: '#C02316',
           innerRadius: '100%',
           outerRadius: '105%'
-        }],
+        }
+        ],
         pane: 0,
         title: {
-          text: 'VU<br/><span style="font-size:8px">Channel A</span>',
+          text: '<br/><span style="font-size:8px">Back Door</span>',
           y: -40
         }
-      }, {
-        min: -20,
-        max: 6,
-        minorTickPosition: 'outside',
-        tickPosition: 'outside',
-        labels: {
-          rotation: 'auto',
-          distance: 20
-        },
-        plotBands: [{
-          from: 0,
-          to: 6,
-          color: '#C02316',
-          innerRadius: '100%',
-          outerRadius: '105%'
-        }],
-        pane: 1,
-        title: {
-          text: 'VU<br/><span style="font-size:8px">Channel B</span>',
-          y: -40
-        }
-      }]
+      },
+        {
+          min: -1,
+          max: 1,
+          minorTickPosition: 'outside',
+          tickPosition: 'outside',
+          labels: {
+            rotation: 'auto',
+            distance: 20
+          },
+          plotBands: [{
+            from: 0,
+            to: 1,
+            color: '#C02316',
+            innerRadius: '100%',
+            outerRadius: '105%'
+          }, {
+            from: -1,
+            to: 0,
+            color: '#008B00',
+            innerRadius: '100%',
+            outerRadius: '105%'
+          }]
+        }]
     };
-    var stop = $interval(function(){
-    var left = $scope.chartConfig.series[0].data[0],
-      right = $scope.chartConfig.series[1].data[0],
-      leftVal,
-      rightVal,
-      inc = (Math.random() - 0.5) * 3;
+    var stop = $interval(function () {
+        $http.get('http://10.0.1.151/digital/6').success(function (data) {
+          $log.log('data: ' + data.return_value);
 
-    leftVal =  left + inc;
-    rightVal = leftVal + inc / 3;
-    if (leftVal < -20 || leftVal > 6) {
-      leftVal = left - inc;
-    }
-    if (rightVal < -20 || rightVal > 6) {
-      rightVal = leftVal;
-    }
-        $scope.chartConfig.series[0].data[0] = leftVal;
-        $scope.chartConfig.series[1].data[0] = rightVal;
+          if (data.return_value === LOCKED) {
+            $scope.chartConfig.series[0].data[0] = -0.5;
+          }else if (data.return_value === UNLOCKED) {
+            $scope.chartConfig.series[0].data[0] = 0.5;
+          }
+
+        }).error(function (error) {
+          $scope.chartConfig.series[0].data[0] = 10;
+          $scope.chartConfig.title.text = "Device Status Unknown";
+        });
+        //var left = $scope.chartConfig.series[0].data[0],
+        //  leftVal,
+        //  rightVal,
+        //  inc = (Math.random() - 0.5);
+        //
+        //leftVal = left + inc;
+        //rightVal = leftVal + inc / 3;
+        //if (leftVal < 0 || leftVal > 0.5) {
+        //  leftVal = left - inc;
+        //}
+        //$scope.chartConfig.series[0].data[0] = leftVal;
       }
-      ,500);
+      , 10000);
 
 
     //http://10.0.1.151/digital/6
-  //  $http.get('http://10.0.1.151/digital/6').success(function(data) {
-  //    $log.log('data' + data);
-  //
-  //  }).error(function(error) {
-  //    $log.error('Error: ' + JSON.stringify(error));
-  //  });
+    //  $http.get('http://10.0.1.151/digital/6').success(function(data) {
+    //    $log.log('data' + data);
+    //
+    //  }).error(function(error) {
+    //    $log.error('Error: ' + JSON.stringify(error));
+    //  });
   });
